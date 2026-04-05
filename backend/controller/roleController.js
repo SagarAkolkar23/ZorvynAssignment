@@ -1,4 +1,4 @@
-import { pool } from "../db/db.js";
+import  pool  from "../db/db.js";
 
 export const addUserToFinance = async (req, res, next) => {
   const client = await pool.connect();

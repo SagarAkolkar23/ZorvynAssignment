@@ -1,4 +1,4 @@
-import { pool } from "../db/db.js";
+import  pool  from "../db/db.js";
 import { hashPassword, comparePassword } from "../utils/hash.js";
 import { generateToken } from "../utils/jwt.js";
 import { successResponse } from "../utils/response.js";

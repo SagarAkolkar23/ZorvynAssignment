@@ -1,9 +1,10 @@
-import { addUserToFinance, getFinanceUsers, updateUserRole } from "../controller/roleController";
-import { protectRoute } from "../middleware/auth";
-import { authorize } from "../middleware/authorize";
-import { apiLimiter } from "../middleware/rateLimit";
-import { getFinanceUsersSchema } from "../validationSchema/authSchema";
-
+import { addUserToFinance, getFinanceUsers, updateUserRole } from "../controller/roleController.js";
+import { protectRoute } from "../middleware/auth.js";
+import { authorize } from "../middleware/authorize.js";
+import { apiLimiter } from "../middleware/rateLimit.js";
+import { validate } from "../middleware/validate.js";
+import { getFinanceUsersSchema } from "../validationSchema/authSchema.js";
+import express from "express"
 const router = express.Router();
 
 

@@ -4,6 +4,7 @@ import { authorize } from "../middleware/authorize.js";
 import { createRecord, deleteRecord, getCategories, getRecords, getUserFinances, updateRecord } from "../controller/recordsController.js";
 import { createRecordSchema, deleteRecordSchema, getCategoriesSchema, getRecordsSchema, updateRecordSchema } from "../validationSchema/recordSchema.js";
 import { apiLimiter } from "../middleware/rateLimit.js";
+import { validate } from "../middleware/validate.js";
 
 const router = express.Router();
 

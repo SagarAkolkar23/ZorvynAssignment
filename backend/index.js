@@ -10,8 +10,8 @@ import recordsRoute from "./route/recordsRoute.js";
 import roleRoute from "./route/roleRoute.js";
 import analyzeRoute from "./route/analyzeRoute.js"; 
 
-import { errorHandler } from "./middlewares/error.middleware.js";
-import { apiLimiter } from "./middlewares/rateLimit.middleware.js";
+import { errorHandler } from "./middleware/errorHandler.js";
+import { apiLimiter } from "./middleware/rateLimit.js";
 
 dotenv.config();
 

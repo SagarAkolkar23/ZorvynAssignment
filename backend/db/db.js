@@ -21,4 +21,4 @@ pool.on("error", (err) => {
   console.error("PostgreSQL error:", err);
 });
 
-export default pool;
+export default  pool;

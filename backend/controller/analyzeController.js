@@ -1,4 +1,4 @@
-import { pool } from "../db/db.js";
+import  pool  from "../db/db.js";
 import { buildDateFilter } from "../utils/buildDateFilter.js";
 import { successResponse } from "../utils/response.js";
 

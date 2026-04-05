@@ -1,4 +1,5 @@
 import swaggerJSDoc from "swagger-jsdoc";
+import path from "path";
 
 const options = {
   definition: {
@@ -14,7 +15,7 @@ const options = {
       },
     ],
   },
-  apis: ["../routes/*.js"], // where your docs live
+  apis: [path.resolve("./route/*.js")], // ✅ FIXED
 };
 
 const swaggerSpec = swaggerJSDoc(options);
