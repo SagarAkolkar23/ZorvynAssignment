@@ -1,327 +1,131 @@
-# 🚀 Finance Management Backend
-
-A scalable, multi-tenant financial management backend built with **Node.js, Express, and PostgreSQL**, designed to support **role-based access control, analytics, and efficient data handling**.
-
----
-
-# 🧠 Overview
-
-This project implements a **complete backend system** for managing financial records across multiple users and dashboards.
-
-It is designed with a strong focus on:
-
-* Clean architecture
-* Role-based access control (RBAC)
-* Scalable database design
-* Analytics-driven APIs
-* Production-ready patterns
-
----
-
-# 🏗️ Architecture
-
-```
-Client → Express API → Middleware → Controllers → PostgreSQL
-```
-
-### 🔹 Layers
-
-* **Middleware**
-
-  * Authentication (JWT)
-  * Authorization (RBAC)
-  * Validation (Zod)
-  * Rate Limiting
-
-* **Controllers**
-
-  * Business logic
-  * Database interaction
-  * Response formatting
-
-* **Database**
-
-  * PostgreSQL (normalized schema)
-  * Transaction-safe operations
-
----
-
-# 🔐 Authentication Flow
-
-## Register
-
-* Creates a new user
-* Automatically creates a finance dashboard
-* Assigns `owner` role
-
-## Login
-
-* Validates credentials
-* Returns JWT token for authenticated access
-
----
-
-# 🛡️ Role-Based Access Control (RBAC)
-
-### Roles
-
-| Role    | Permissions            |
-| ------- | ---------------------- |
-| Owner   | Full control           |
-| Admin   | Manage users & records |
-| Analyst | View + analytics       |
-| Viewer  | View only              |
-
-### Hierarchy
-
-```
-Owner > Admin > Analyst > Viewer
-```
-
-### Access Rules
-
-| Action        | Owner | Admin | Analyst | Viewer |
-| ------------- | ----- | ----- | ------- | ------ |
-| Create Record | ✅     | ✅     | ❌       | ❌      |
-| Delete Record | ✅     | ✅     | ❌       | ❌      |
-| Add Users     | ✅     | ✅*    | ❌       | ❌      |
-| Assign Admin  | ✅     | ❌     | ❌       | ❌      |
-
-*Admin can only assign Analyst/Viewer roles
-
----
-
-# 🏢 Data Model
-
-### Tables
-
-* `users`
-* `finances`
-* `user_finances` (relationship + roles)
-* `records`
-* `categories`
-
-### Relationships
-
-```
-User ↔ user_finances ↔ Finance
-Finance → Records → Categories
-```
-
----
-
-# 💰 Record Management
-
-## Features
-
-* Create, update, delete financial records
-* Custom + predefined categories
-* Transaction-safe operations
-
-## Flow
-
-1. Validate input
-2. Check user role
-3. Handle category (existing/new)
-4. Store transaction
-
----
-
-# 📊 Analytics System
-
-## 1. Finance Summary
-
-* Total income
-* Total expense
-* Net balance
-
-## 2. Category Breakdown
-
-* Expense/income per category
-* Used for pie charts
-
-## 3. Trends API
-
-* Time-based income vs expense
-* Used for line graphs
-
-## 4. Category Trends
-
-* Category-wise trends over time
-* Used for stacked charts
-
----
-
-# 🎨 Graphical Representation
-
-| Graph Type      | API Used           |
-| --------------- | ------------------ |
-| Dashboard Cards | Summary API        |
-| Pie Chart       | Category Breakdown |
-| Line Chart      | Trends API         |
-| Stacked Chart   | Category Trends    |
-
----
-
-# ⚙️ Filtering System
-
-Reusable utility:
-
-```
-buildDateFilter()
-```
-
-Supports:
-
-* Day
-* Week
-* Month
-* Year
-* Custom range
-
----
-
-# 📦 Pagination
-
-Implemented for record listing:
-
-```
-GET /records?page=1&limit=10
-```
-
-Response includes:
-
-* total records
-* total pages
-* current page
-
----
-
-# 🚫 Rate Limiting
-
-Implemented using `express-rate-limit`
-
-### 🔐 Auth Routes
-
-* Strict limits
-* Prevent brute force attacks
-
-### 🌐 General APIs
-
-* Moderate limits
-* Prevent spam
-
----
-
-# ✅ Validation
-
-Implemented using **Zod**
-
-### Flow
-
-```
-Request → Validation Middleware → Controller
-```
-
-### Benefits
-
-* Clean controllers
-* Strong input validation
-* Consistent error handling
-
----
-
-# 📦 Response Format
-
-## Success
-
-```json
-{
-  "success": true,
-  "message": "...",
-  "data": {}
+🚀 Setup & Running Guide
+Everything you need to get the Finance Management Backend running locally from scratch.
+
+Prerequisites
+Make sure you have these installed before starting:
+ToolVersionCheckNode.js>= 18node -vnpm>= 9npm -vPostgreSQL>= 14psql --version
+
+Step 1 — Clone the Repository
+git clone -> https://github.com/SagarAkolkar23/ZorvynAssignment.git
+cd backend
+
+Step 2 — Install Dependencies
+npm install
+
+Step 3 — Set Up PostgreSQL Database
+Open your PostgreSQL shell and create the database:
+psql -U postgres
+sqlCREATE DATABASE Zorvyn;
+\q
+
+If you already have a database named Zorvyn, skip this step.
+
+Step 4 — Configure Environment Variables
+Create a .env file in the root of the project:
+cp .env.example .env
+Then open .env and set it to exactly this:
+
+PORT=3005
+JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=userName
+DB_PASSWORD=password
+DB_NAME=Database name
+
+Note: JWT_SECRET can be any long random string. In production, use something like openssl rand -hex 64 to generate one.
+
+
+
+Step 5 — Start the Server
+Development (hot reload with nodemon):
+npm run dev
+Production:
+npm start
+You should see:
+🚀 Server running on http://localhost:3005
+📦 Connected to PostgreSQL — Zorvyn
+📖 API Docs available at http://localhost:3005/api-docs
+
+Verify It's Working
+Test the health check endpoint:
+curl http://localhost:3005/api/health
+Expected response:
+json{
+"success": true,
+"message": "Server is running"
 }
-```
 
-## Error
+Quick API Test
+Register a new user
+curl -X POST http://localhost:3005/api/auth/register \
+ -H "Content-Type: application/json" \
+ -d '{
+"name": "Sagar Akolkar",
+"email": "sagar@example.com",
+"password": "securepassword123"
+}'
+Login
+curl -X POST http://localhost:3005/api/auth/login \
+ -H "Content-Type: application/json" \
+ -d '{
+"email": "sagar@example.com",
+"password": "securepassword123"
+}'
+Copy the token from the response and use it in subsequent requests:
+curl http://localhost:3005/api/finances \
+ -H "Authorization: Bearer YOUR_TOKEN_HERE"
 
-```json
-{
-  "success": false,
-  "error": {
-    "message": "...",
-    "code": "..."
-  }
-}
-```
+API Documentation
+Swagger UI is available at:
+http://localhost:3005/api-docs
+All endpoints, request schemas, and response formats are documented there. No external tool needed.
 
----
 
-# 🔄 Transactions
+Project Structure
+finance-backend/
+├── src/
+│ ├── config/
+│ │ └── database.js # PostgreSQL connection (uses .env)
+│ ├── middleware/
+│ │ ├── auth.js # JWT verification
+│ │ ├── rbac.js # Role-based access control
+│ │ ├── validate.js # Zod input validation
+│ │ └── rateLimiter.js # Rate limiting config
+│ ├── controllers/
+│ │ ├── auth.controller.js
+│ │ ├── finance.controller.js
+│ │ ├── record.controller.js
+│ │ └── analytics.controller.js
+│ ├── routes/
+│ │ ├── auth.routes.js
+│ │ ├── finance.routes.js
+│ │ ├── record.routes.js
+│ │ └── analytics.routes.js
+│ ├── schemas/ # Zod validation schemas
+│ ├── utils/
+│ │ └── buildDateFilter.js # Reusable date filter utility
+│ └── app.js
+├── migrations/ # SQL migration files
+├── tests/ # Jest + Supertest tests
+├── .env.example # Environment variable template
+├── .env # Your local config (not committed)
+├── .gitignore
+└── package.json
 
-Used in:
+Troubleshooting
+ECONNREFUSED — cannot connect to PostgreSQL
+PostgreSQL is not running. Start it:
 
-* User registration
-* Record creation
-* Role updates
 
-Ensures:
+Environment Variables Reference
+PORT 3005
+JWT_SECRET any long stringSecret used to sign JWT tokens — keep this private
+DB_HOST localhost
+DB_PORT 5432  
+DB_USER username 
+DB_PASSWORD password 
+DB_NAME DatabaseName
 
-* Data consistency
-* No partial operations
 
----
-
-# 🧪 Testing
-
-Basic **integration tests** implemented using:
-
-* Jest
-* Supertest
-
-Tested flows:
-
-* Authentication
-* Record creation
-* RBAC behavior
-
----
-
-# 🚀 Scalability Considerations
-
-### Current
-
-* Indexed queries
-* Pagination
-* Modular architecture
-
-### Future Improvements
-
-* Redis-based rate limiting
-* Caching layer
-* Cursor-based pagination
-* Microservices (if needed)
-
----
-
-# 💡 Key Design Decisions
-
-* Used **ledger-style records** instead of storing totals → ensures accurate analytics
-* Implemented **RBAC at DB + middleware level** → stronger security
-* Designed **reusable filtering utility** → avoids duplication
-* Used **structured responses** → frontend-friendly APIs
-
----
-
-# 🏁 Conclusion
-
-This backend demonstrates:
-
-* Multi-tenant system design
-* Role-based access control
-* Scalable API architecture
-* Analytics-driven data processing
-
-It goes beyond basic CRUD and focuses on **real-world backend engineering practices**.
-
----
+Once the server is running, head to http://localhost:3005/api-docs for the full interactive API reference.
