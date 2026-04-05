@@ -205,3 +205,57 @@ export const updateUserRole = async (req, res, next) => {
     client.release();
   }
 };
+
+
+export const getFinanceUsers = async (req, res, next) => {
+  try {
+    const { financeId } = req.validated.params;
+    const requesterId = req.user.userId;
+
+    const accessCheck = await pool.query(
+      `SELECT role FROM user_finances
+       WHERE user_id = $1 AND finance_id = $2`,
+      [requesterId, financeId]
+    );
+
+    if (accessCheck.rows.length === 0) {
+      const err = new Error("You are not part of this finance");
+      err.status = 403;
+      err.code = "FORBIDDEN";
+      throw err;
+    }
+
+    // 🔹 Get all users + roles
+    const result = await pool.query(
+      `
+      SELECT 
+        u.id,
+        u.name,
+        u.email,
+        uf.role,
+        uf.created_at
+      FROM user_finances uf
+      JOIN users u ON uf.user_id = u.id
+      WHERE uf.finance_id = $1
+      ORDER BY 
+        CASE uf.role
+          WHEN 'owner' THEN 1
+          WHEN 'admin' THEN 2
+          WHEN 'analyst' THEN 3
+          WHEN 'viewer' THEN 4
+        END,
+        u.name ASC
+      `,
+      [financeId]
+    );
+
+    return successResponse(
+      res,
+      { users: result.rows },
+      "Finance users fetched successfully"
+    );
+
+  } catch (error) {
+    next(error);
+  }
+};

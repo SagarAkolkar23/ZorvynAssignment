@@ -1,0 +1,80 @@
+CREATE TABLE public.users (
+	id uuid DEFAULT gen_random_uuid() NOT NULL,
+	"name" varchar(100) NOT NULL,
+	email varchar(150) NOT NULL,
+	"password" text NOT NULL,
+	status varchar(20) DEFAULT 'active'::character varying NULL,
+	created_at timestamp DEFAULT CURRENT_TIMESTAMP NULL,
+	updated_at timestamp DEFAULT CURRENT_TIMESTAMP NULL,
+	CONSTRAINT users_email_key UNIQUE (email),
+	CONSTRAINT users_pkey PRIMARY KEY (id)
+);
+
+
+CREATE TABLE public.finances (
+	id uuid DEFAULT gen_random_uuid() NOT NULL,
+	"name" varchar(150) NOT NULL,
+	created_by uuid NULL,
+	created_at timestamp DEFAULT CURRENT_TIMESTAMP NULL,
+	updated_at timestamp DEFAULT CURRENT_TIMESTAMP NULL,
+	CONSTRAINT finances_pkey PRIMARY KEY (id),
+	CONSTRAINT finances_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id) ON DELETE SET NULL
+);
+
+
+CREATE TABLE public.user_finances (
+	id uuid DEFAULT gen_random_uuid() NOT NULL,
+	user_id uuid NULL,
+	finance_id uuid NULL,
+	"role" varchar(20) NOT NULL,
+	status varchar(20) DEFAULT 'active'::character varying NULL,
+	created_at timestamp DEFAULT CURRENT_TIMESTAMP NULL,
+	CONSTRAINT user_finances_pkey PRIMARY KEY (id),
+	CONSTRAINT user_finances_role_check CHECK (((role)::text = ANY ((ARRAY['owner'::character varying, 'admin'::character varying, 'analyst'::character varying, 'viewer'::character varying])::text[]))),
+	CONSTRAINT user_finances_user_id_finance_id_key UNIQUE (user_id, finance_id),
+	CONSTRAINT user_finances_finance_id_fkey FOREIGN KEY (finance_id) REFERENCES public.finances(id) ON DELETE CASCADE,
+	CONSTRAINT user_finances_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE
+);
+
+
+CREATE TABLE public.records (
+	id uuid DEFAULT gen_random_uuid() NOT NULL,
+	finance_id uuid NOT NULL,
+	category_id uuid NULL,
+	created_by uuid NULL,
+	amount numeric(12, 2) NOT NULL,
+	"type" varchar(10) NOT NULL,
+	note text NULL,
+	"date" date NOT NULL,
+	created_at timestamp DEFAULT CURRENT_TIMESTAMP NULL,
+	updated_at timestamp DEFAULT CURRENT_TIMESTAMP NULL,
+	CONSTRAINT records_amount_check CHECK ((amount > (0)::numeric)),
+	CONSTRAINT records_pkey PRIMARY KEY (id),
+	CONSTRAINT records_type_check CHECK (((type)::text = ANY ((ARRAY['income'::character varying, 'expense'::character varying])::text[]))),
+	CONSTRAINT records_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories(id) ON DELETE SET NULL,
+	CONSTRAINT records_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id) ON DELETE SET NULL,
+	CONSTRAINT records_finance_id_fkey FOREIGN KEY (finance_id) REFERENCES public.finances(id) ON DELETE CASCADE
+);
+CREATE INDEX idx_records_category ON public.records USING btree (category_id);
+CREATE INDEX idx_records_date ON public.records USING btree (date);
+CREATE INDEX idx_records_finance ON public.records USING btree (finance_id);
+CREATE INDEX idx_records_type ON public.records USING btree (type);
+
+
+
+CREATE TABLE public.categories (
+	id uuid DEFAULT gen_random_uuid() NOT NULL,
+	"name" varchar(100) NOT NULL,
+	"type" varchar(10) NOT NULL,
+	is_default bool DEFAULT true NULL,
+	finance_id uuid NULL,
+	icon varchar(50) NULL,
+	color varchar(20) NULL,
+	created_at timestamp DEFAULT CURRENT_TIMESTAMP NULL,
+	CONSTRAINT categories_pkey PRIMARY KEY (id),
+	CONSTRAINT categories_type_check CHECK (((type)::text = ANY ((ARRAY['income'::character varying, 'expense'::character varying])::text[]))),
+	CONSTRAINT categories_finance_id_fkey FOREIGN KEY (finance_id) REFERENCES public.finances(id) ON DELETE CASCADE
+);
+CREATE INDEX idx_categories_finance ON public.categories USING btree (finance_id);
+CREATE INDEX idx_categories_type ON public.categories USING btree (type);
+CREATE UNIQUE INDEX unique_category_per_finance ON public.categories USING btree (lower((name)::text), finance_id, type);

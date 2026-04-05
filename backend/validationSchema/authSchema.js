@@ -15,3 +15,10 @@ export const loginSchema = z.object({
     password: z.string().min(1, "Password is required"),
   }),
 });
+
+
+export const getFinanceUsersSchema = z.object({
+  params: z.object({
+    financeId: z.string().uuid(),
+  }),
+});

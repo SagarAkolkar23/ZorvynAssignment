@@ -1,10 +1,11 @@
 import { pool } from "../db/db.js";
 import { buildDateFilter } from "../utils/buildDateFilter.js";
+import { successResponse } from "../utils/response.js";
 
 export const getFinanceSummary = async (req, res, next) => {
   try {
-    const { financeId } = req.params;
-    const { filter, startDate, endDate } = req.query;
+    const { financeId } = req.validated.params;
+    const { filter, startDate, endDate } = req.validated.query;
 
     const { clause, values } = buildDateFilter({
       filter,
@@ -28,27 +29,24 @@ export const getFinanceSummary = async (req, res, next) => {
     const totalIncome = Number(result.rows[0].total_income);
     const totalExpense = Number(result.rows[0].total_expense);
 
-    res.json({
-      totalIncome,
-      totalExpense,
-      netBalance: totalIncome - totalExpense,
-    });
+    return successResponse(
+      res,
+      {
+        totalIncome,
+        totalExpense,
+        netBalance: totalIncome - totalExpense,
+      },
+      "Finance summary fetched successfully",
+    );
   } catch (error) {
     next(error);
   }
 };
 
-
 export const getCategoryBreakdown = async (req, res, next) => {
   try {
-    const { financeId } = req.params;
-    const { type, filter, startDate, endDate } = req.query;
-
-    if (!type || !["income", "expense"].includes(type)) {
-      return res.status(400).json({
-        message: "Valid type (income/expense) is required",
-      });
-    }
+    const { financeId } = req.validated.params;
+    const { type, filter, startDate, endDate } = req.validated.query;
 
     const { clause, values } = buildDateFilter({
       filter,
@@ -71,24 +69,23 @@ export const getCategoryBreakdown = async (req, res, next) => {
       GROUP BY c.id, c.name
       ORDER BY total_amount DESC
       `,
-      [financeId, type, ...values]
+      [financeId, type, ...values],
     );
 
-    return res.json({
-      type,
-      breakdown: result.rows,
-    });
-
+    return successResponse(
+      res,
+      { type, breakdown: result.rows },
+      "Category breakdown fetched successfully",
+    );
   } catch (error) {
     next(error);
   }
 };
 
-
 export const getTrends = async (req, res, next) => {
   try {
-    const { financeId } = req.params;
-    const { filter } = req.query;
+    const { financeId } = req.validated.params;
+    const { filter } = req.validated.query;
 
     let groupBy = "";
     let dateCondition = "";
@@ -114,50 +111,41 @@ export const getTrends = async (req, res, next) => {
         break;
 
       default:
-        return res.status(400).json({
-          message: "Invalid filter (week, month, year required)",
-        });
+        const err = new Error("Invalid filter");
+        err.status = 400;
+        err.code = "VALIDATION_ERROR";
+        throw err;
     }
 
     const result = await pool.query(
       `
       SELECT 
         TO_CHAR(${groupBy}, '${labelFormat}') AS label,
-
         COALESCE(SUM(CASE WHEN type = 'income' THEN amount END), 0) AS income,
         COALESCE(SUM(CASE WHEN type = 'expense' THEN amount END), 0) AS expense
-
       FROM records
       WHERE finance_id = $1
       AND ${dateCondition}
-
       GROUP BY ${groupBy}
       ORDER BY ${groupBy} ASC
       `,
-      [financeId]
+      [financeId],
     );
 
-    return res.json({
-      filter,
-      data: result.rows,
-    });
-
+    return successResponse(
+      res,
+      { filter, data: result.rows },
+      "Trends fetched successfully",
+    );
   } catch (error) {
     next(error);
   }
 };
 
-
 export const getCategoryTrends = async (req, res, next) => {
   try {
-    const { financeId } = req.params;
-    const { type, filter } = req.query;
-
-    if (!type || !["income", "expense"].includes(type)) {
-      return res.status(400).json({
-        message: "Valid type (income/expense) is required",
-      });
-    }
+    const { financeId } = req.validated.params;
+    const { type, filter } = req.validated.query;
 
     let groupBy = "";
     let dateCondition = "";
@@ -183,9 +171,10 @@ export const getCategoryTrends = async (req, res, next) => {
         break;
 
       default:
-        return res.status(400).json({
-          message: "Invalid filter (week, month, year required)",
-        });
+        const err = new Error("Invalid filter");
+        err.status = 400;
+        err.code = "VALIDATION_ERROR";
+        throw err;
     }
 
     const result = await pool.query(
@@ -194,26 +183,21 @@ export const getCategoryTrends = async (req, res, next) => {
         TO_CHAR(${groupBy}, '${labelFormat}') AS label,
         c.name AS category,
         COALESCE(SUM(r.amount), 0) AS total_amount
-
       FROM records r
       LEFT JOIN categories c ON r.category_id = c.id
-
       WHERE r.finance_id = $1
       AND r.type = $2
       AND ${dateCondition}
-
       GROUP BY label, c.name
       ORDER BY label ASC
       `,
-      [financeId, type]
+      [financeId, type],
     );
 
     const grouped = {};
 
-    result.rows.forEach(row => {
-      if (!grouped[row.label]) {
-        grouped[row.label] = [];
-      }
+    result.rows.forEach((row) => {
+      if (!grouped[row.label]) grouped[row.label] = [];
 
       grouped[row.label].push({
         name: row.category,
@@ -221,20 +205,17 @@ export const getCategoryTrends = async (req, res, next) => {
       });
     });
 
-    const formatted = Object.keys(grouped).map(label => ({
+    const formatted = Object.keys(grouped).map((label) => ({
       label,
       categories: grouped[label],
     }));
 
-    return res.json({
-      type,
-      filter,
-      data: formatted,
-    });
-
+    return successResponse(
+      res,
+      { type, filter, data: formatted },
+      "Category trends fetched successfully",
+    );
   } catch (error) {
     next(error);
   }
 };
-
-
